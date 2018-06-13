@@ -1,0 +1,182 @@
+#!/bin/bash
+
+
+function m_test() {
+	local DIR_ROOT="$1"
+	local BAIL=$2
+	shift 2
+	echo "testing in ${DIR_ROOT}"
+	echo "args: $@"
+
+	while true;
+	do
+		#bail if not in a repo
+		if [ "${BAIL}" -eq "1" ]; then
+			echo "Not in a Repository" >&2
+			break
+		fi
+
+		#meson
+		if [ -f "${DIR_ROOT}/meson.build" ]; then
+			if [ ! -d "${DIR_ROOT}/build" ]; then
+				meson build
+			fi
+			cd build
+			meson test $@
+			cd ..
+			break
+		fi
+
+		#cmake
+		if [ -f "${DIR_ROOT}/CMakeLists.txt" ]; then
+			if [ ! -d "${DIR_ROOT}/build" ]; then
+				mkdir build
+				cd build
+				cmake -G Ninja ..
+				cd ..
+			fi
+			cmake --build build
+			cd build
+			ctest
+			cd ..
+			break
+		fi
+
+		#autotools; fall trough to make for actual build
+		if [ -f "${DIR_ROOT}/autogen.sh" ] && [ ! -f "${DIR_ROOT}/configure" ]; then
+			./autogen.sh
+		fi
+
+		if [ -f "${DIR_ROOT}/configure" ] && [ ! -f "${DIR_ROOT}/Makefile" ]; then
+			./configure
+		fi
+
+		#make 
+		if [ -f "${DIR_ROOT}/Makefile" ]; then
+			make -j $(nproc --all) check
+			break
+		fi
+
+	done
+
+}
+
+function m_build() {
+	local DIR_ROOT="$1"
+	local BAIL=$2
+	shift 2
+	echo "building in ${DIR_ROOT}"
+	echo "args: $@"
+
+	while true;
+	do
+		#bail if not in a repo
+		if [ "${BAIL}" -eq "1" ]; then
+			echo "Not in a Repository" >&2
+			break
+		fi
+
+		#meson
+		if [ -f "${DIR_ROOT}/meson.build" ]; then
+			if [ ! -d "${DIR_ROOT}/build" ]; then
+				meson build
+			fi
+			ninja -C build $@
+			break
+		fi
+
+		#cmake
+		if [ -f "${DIR_ROOT}/CMakeLists.txt" ]; then
+			if [ ! -d "${DIR_ROOT}/build" ]; then
+				mkdir build
+				cd build
+				cmake -G Ninja ..
+				cd ..
+			fi
+			cmake --build build $@
+			break
+		fi
+
+		#autotools; fall trough to make for actual build
+		if [ -f "${DIR_ROOT}/autogen.sh" ] && [ ! -f "${DIR_ROOT}/configure" ]; then
+			./autogen.sh
+		fi
+
+		if [ -f "${DIR_ROOT}/configure" ] && [ ! -f "${DIR_ROOT}/Makefile" ]; then
+			./configure
+		fi
+
+		#make 
+		if [ -f "${DIR_ROOT}/Makefile" ]; then
+			make -j $(nproc --all) $@
+			break
+		fi
+
+		echo "No Build System Detected"
+		break
+	done
+}
+
+function m_clean() {
+	local DIR_ROOT="$1"
+	local BAIL=$2
+	shift 2
+	local BUILD_DIR=0
+	echo "Cleaning"
+	while true;
+	do
+		if [ "${BAIL}" -eq "1" ]; then
+			echo "Not in a Repository" >&2
+			break
+		fi
+
+		if [ -f ${DIR_ROOT}/Makefile ]; then
+			make -j $(nproc --all) clean
+			break
+		fi
+
+		if [ -f ${DIR_ROOT}/build/Makefile ]; then
+			make -C build -j $(nproc --all) clean
+			break
+		fi
+
+		if [ -f ${DIR_ROOT}/build/build.ninja ]; then
+			ninja -C build clean
+			break
+		fi
+
+		break
+	done
+}
+
+BAIL=0
+DIR_ROOT="."
+OLD_DIR=$(pwd)
+
+#find root of repository
+while [ ! -d "${DIR_ROOT}/.git" ] && [ ! -f "${DIR_ROOT}/.mstop" ]
+do
+	DIR_ROOT="$(dirname $(readlink -f ${DIR_ROOT}))"
+	if [ "${DIR_ROOT}" = "/" ]; then
+		BAIL=1
+		break
+	fi
+done
+
+cd "${DIR_ROOT}"
+
+case "$1" in
+	c*)
+		m_clean "${DIR_ROOT}" "${BAIL}"
+		;;
+	t*)
+		shift
+		m_test "${DIR_ROOT}" "${BAIL}" $@
+		;;
+	*)
+		shift
+		m_build "${DIR_ROOT}" "${BAIL}" $@
+		;;
+esac
+
+cd "${OLD_DIR}"
