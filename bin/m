@@ -51,7 +51,7 @@ function m_test() {
 		fi
 
 		#make 
-		if [ -f "${DIR_ROOT}/Makefile" || -f  "${DIR_ROOT}/makefile" ]; then
+		if [ -f "${DIR_ROOT}/Makefile" ] || [ -f  "${DIR_ROOT}/makefile" ]; then
 			make -j $(nproc --all) check
 			break
 		fi
@@ -106,7 +106,7 @@ function m_build() {
 		fi
 
 		#make 
-		if [ -f "${DIR_ROOT}/Makefile" || -f  -f "${DIR_ROOT}/makefile" ]; then
+		if [ -f "${DIR_ROOT}/Makefile" ] || [ -f "${DIR_ROOT}/makefile" ]; then
 			make -j $(nproc --all) $@
 			break
 		fi
@@ -129,7 +129,7 @@ function m_clean() {
 			break
 		fi
 
-		if [ -f ${DIR_ROOT}/Makefile ]; then
+		if [ -f ${DIR_ROOT}/Makefile ] || [ -f $DIR_ROOT/makefile ]; then
 			make -j $(nproc --all) clean
 			break
 		fi
