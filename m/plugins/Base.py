@@ -1,11 +1,12 @@
 from collections import defaultdict
+from pathlib import Path
 import itertools
 import enum
 import pprint
 import typing
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
 
 def get_class_name(cls):
@@ -40,7 +41,7 @@ class Setting:
         return str(self)
 
 
-class PluginSupport(enum.Enum):
+class PluginSupport(enum.IntEnum):
     """
     Modes for supporting functions
 
@@ -104,6 +105,11 @@ class BasePlugin:
         """cleans source code or a subset there of"""
         raise NotProvidedError("clean", self)
 
+    def install(self, settings):
+        """cleans source code or a subset there of"""
+        raise NotProvidedError("install", self)
+
+
     def get_settings_factory(self, cls=None, priority=Setting.DEFAULT):
         """returns a helper function that fills in commmon arguments on the Setting object"""
         if cls is None:
@@ -149,16 +155,30 @@ def plugin(cls):
 
 class MBuildTool:
 
-    def __init__(self):
-        self._settings = {}
+    def __init__(self, args):
+        self._settings = self._args_to_settings(args)
+        self._actions_run = 0
 
+    def _args_to_settings(self, args):
+        return {
+                key:Setting(key, value, "CmdlineArguments", priority=Setting.URGENT)
+                for key, value
+                in vars(args).items()
+                if any(isinstance(value, cls) for cls in (int,str,list,Path))
+        }
+
+    def _active_plugin_loglevel(self, status):
+        if status >= PluginSupport.DEFAULT_BEFORE_MAIN and self._actions_run > 0:
+            return logging.INFO
+        else:
+            return logging.DEBUG
 
     def _find_active_plugins(self, method: str):
         """finds the plugin that should conduct the given call"""
         active_plugins = defaultdict(list)
         for plugin in ALL_PLUGINS:
             status = plugin.check(method, self._settings)
-            LOGGER.debug("plugin %s is %s for %s", get_class_name(plugin), status.name, method)
+            LOGGER.log(self._active_plugin_loglevel(status),"plugin %s is %s for %s", get_class_name(plugin), status.name, method)
             if status in (PluginSupport.DEFAULT_BEFORE_MAIN, PluginSupport.REQUESTED_SETTINGS_BEFORE, PluginSupport.REQUESTED_CMD_BEFORE):
                 active_plugins['before'].append(plugin)
             elif status in (PluginSupport.DEFAULT_MAIN, PluginSupport.REQUESTED_SETTINGS_MAIN, PluginSupport.REQUESTED_CMD_MAIN):
@@ -167,9 +187,6 @@ class MBuildTool:
                 active_plugins['after'].append(plugin)
         return active_plugins
 
-
-    def _get_settings(self):
-        """code to query all plug-ins for settings and combine them"""
 
     def _run_action(self, method: str):
         """implmementation of the plugin calling logic"""
@@ -182,16 +199,18 @@ class MBuildTool:
             results.append(getattr(main_plugin, method)(self._settings))
         for after_plugin in plugins['after']:
             results.append(getattr(after_plugin, method)(self._settings))
+        
+        self._actions_run += 1
         if method == "settings":
             self._update_settings(results)
 
-    def _update_settings(self, new_settings, inital=False):
+    def _update_settings(self, new_settings):
         for new_setting in itertools.chain(*new_settings):
             current_setting = self._settings.get(new_setting.name, None)
             if current_setting is not None:
                 if new_setting.priority > current_setting.priority:
                     self._settings[current_setting.name] = new_setting
-                elif new_setting.priority == current_setting.priority and inital:
+                elif new_setting.priority == current_setting.priority and self._actions_run > 0:
                     LOGGER.debug("ignoring duplicate priority setting %s from %s and %s",
                             new_setting.name,
                             current_setting.source,
@@ -214,6 +233,12 @@ class MBuildTool:
         """delegates to the right clean function"""
         self._run_action("settings")
         self._run_action("clean")
+
+    def install(self):
+        """delegates to the right clean function"""
+        self._run_action("settings")
+        self._run_action("install")
+
 
     def settings(self):
         """delegates to the right clean function"""
