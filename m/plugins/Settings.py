@@ -14,7 +14,7 @@ class Settings(BasePlugin):
         }
 
     def _find_repo_base(self):
-        repo_base = None
+        repo_base = Path.cwd()
         dirs = [Path.cwd(), *Path.cwd().parents]
         for path in dirs:
             if (path / ".git").exists():

@@ -7,10 +7,12 @@ from .plugins.Base import MBuildTool
 import argparse
 import itertools
 import shlex
+import logging
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--cmdline", "-c", action="append", default=list())
+    parser.add_argument("--verbose", "-v", action="count", default=0)
     parser.set_defaults(action=lambda m: m.build())
 
     sp = parser.add_subparsers()
@@ -35,6 +37,7 @@ def parse_args():
 def main():
     args = parse_args()
     args.cmdline = list(itertools.chain(*[shlex.split(arg) for arg in args.cmdline]))
+    logging.basicConfig(level=logging.DEBUG if args.verbose > 0 else logging.INFO)
     tool = MBuildTool(args)
     args.action(tool)
 

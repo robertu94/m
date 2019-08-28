@@ -6,7 +6,6 @@ import pprint
 import typing
 import logging
 
-logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
 
 def get_class_name(cls):

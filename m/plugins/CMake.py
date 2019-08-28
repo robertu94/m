@@ -17,12 +17,16 @@ class CMakePlugin(BasePlugin):
                    (settings['build_dir'].value / "Makefile").exists()
                )
 
+    @staticmethod
+    def print_builddir(settings):
+        print(f"m: Entering directory '{settings['build_dir'].value!s}'", flush=True)
+
     def build(self, settings):
         """compiles the source code or a subset thereof"""
         self.configure(settings)
 
         if self.is_configured(settings):
-            print("m[1]: Entering directory", str(settings['build_dir'].value))
+            self.print_builddir(settings)
             run(["cmake","--build",".", *settings['cmdline'].value], cwd=settings['build_dir'].value)
         else:
             print("failed to configure")
@@ -30,9 +34,10 @@ class CMakePlugin(BasePlugin):
     def test(self, settings):
         """runs automated tests on source code or a subset there of"""
         self.configure(settings)
+        self.build(settings)
 
         if self.is_configured(settings):
-            print("m[1]: Entering directory", str(settings['build_dir'].value))
+            self.print_builddir(settings)
             run(["ctest", *settings['cmdline'].value], cwd=settings['build_dir'].value)
         else:
             print("failed to configure")
@@ -42,7 +47,7 @@ class CMakePlugin(BasePlugin):
         self.configure(settings)
 
         if self.is_configured(settings):
-            print("m[1]: Entering directory", str(settings['build_dir'].value))
+            self.print_builddir(settings)
             run(["cmake", "--build", ".", "--target", "clean"], cwd=settings['build_dir'].value)
         else:
             print("failed to configure")
@@ -52,7 +57,7 @@ class CMakePlugin(BasePlugin):
         self.configure(settings)
 
         if self.is_configured(settings):
-            print("m[1]: Entering directory", str(settings['build_dir'].value))
+            self.print_builddir(settings)
             run(["cmake","--install","."], cwd=settings['build_dir'].value)
         else:
             print("failed to configure")
