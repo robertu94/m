@@ -21,6 +21,8 @@ def parse_args():
     parser.add_argument("--cmdline_build", "-c",
         action="append", default=list())
     parser.add_argument("--verbose", "-v", action="count", default=0)
+    parser.add_argument("--cmd_enable", "-e", action="append", default=[])
+    parser.add_argument("--cmd_disable", "-d", action="append", default=[])
     parser.set_defaults(action=lambda m: m.build())
 
     subparsers = parser.add_subparsers()

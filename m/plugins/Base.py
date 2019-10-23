@@ -44,6 +44,8 @@ class PluginSupport(enum.IntEnum):
     """
     Modes for supporting functions
 
+    SETTINGS_DISABLED -- the plugin is disabled by the settings file
+    CMD_DISABLED -- the plugin is disabled on the command line
     NOT_SUPPORTED -- do not call this method on this plugin, it may not be
                      implemented
     NOT_ENABLED_BY_DEFAULT -- plugin supports this method, but does not act on default,
@@ -74,10 +76,13 @@ class PluginSupport(enum.IntEnum):
     REQUESTED_CMD_AFTER -- this module was specifically requested on the
                            command line, after the main mode
     """
+    SETTTINGS_DISABLED = -4
+    CMD_DISABLED = -3
     NOT_SUPPORTED = -2
     NOT_ENABLED_BY_REPOSITORY = -1
     NOT_ENABLED_BY_DEFAULT = 0
     NOT_NEEDED = 1
+
     DEFAULT_BEFORE_MAIN = 2
     DEFAULT_MAIN = 3
     DEFAULT_AFTER_MAIN = 4
@@ -125,6 +130,16 @@ class BasePlugin:
             "settings": PluginSupport.DEFAULT_BEFORE_MAIN
         }
 
+    @staticmethod
+    def _is_in_ignorecase(item, list):
+        item_lowered = item.lower()
+        for list_lowered in (i.lower() for i in list):
+            if item_lowered.startswith(list_lowered):
+                return True
+        return False
+
+
+
     def check(self, method: str, settings: typing.List[Setting]) -> int:
         """returns integer priority representing if an operation is supported,
         higher values are preferred.
@@ -132,10 +147,17 @@ class BasePlugin:
         Users: please call this method rather than checking _supported() or checking for exceptions
         Plugin Developers: please override _supported instead().
         """
-        cls_name = get_class_name(self)
+        cls_name = get_class_name(self).lower()
 
-        
-        return self._supported(settings).get(method, PluginSupport.NOT_SUPPORTED)
+        is_supported = self._supported(settings).get(method, PluginSupport.NOT_SUPPORTED) 
+        if is_supported is not PluginSupport.NOT_SUPPORTED:
+            for setting in settings.values():
+                if setting.name == "cmd_enable" and self._is_in_ignorecase(cls_name, setting.value):
+                    is_supported = PluginSupport.REQUESTED_CMD_MAIN
+                if setting.name == "cmd_disable" and self._is_in_ignorecase(cls_name, setting.value):
+                    is_supported = PluginSupport.CMD_DISABLED
+        return is_supported
+
 
         
 
@@ -198,10 +220,13 @@ class MBuildTool:
         plugins = self._find_active_plugins(method)
         results = []
         for before_plugin in plugins['before']:
+            LOGGER.debug("%s: %s", method, get_class_name(before_plugin))
             results.append(getattr(before_plugin, method)(self._settings))
         for main_plugin in plugins['main']:
+            LOGGER.debug("%s: %s", method, get_class_name(main_plugin))
             results.append(getattr(main_plugin, method)(self._settings))
         for after_plugin in plugins['after']:
+            LOGGER.debug("%s: %s", method, get_class_name(after_plugin))
             results.append(getattr(after_plugin, method)(self._settings))
         
         self._actions_run += 1
