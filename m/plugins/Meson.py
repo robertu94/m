@@ -1,6 +1,7 @@
 from subprocess import run
 from .Base import plugin, BasePlugin, PluginSupport
 
+
 @plugin
 class MesonPlugin(BasePlugin):
 
@@ -8,7 +9,8 @@ class MesonPlugin(BasePlugin):
         """configure the build directory"""
         if not self.is_configured(settings):
             settings['build_dir'].value.mkdir(exist_ok=True)
-            run(["meson", str(settings['build_dir'].value)], cwd=settings['repo_base'].value)
+            run(["meson", str(settings['build_dir'].value)],
+                    cwd=settings['repo_base'].value)
 
     def is_configured(self, settings):
         """test if the build directory is configured"""
@@ -22,7 +24,8 @@ class MesonPlugin(BasePlugin):
 
         if self.is_configured(settings):
             print("m[1]: Entering directory", str(settings['build_dir'].value))
-            run(["ninja","-C", str(settings['build_dir'].value), *settings['cmdline'].value], cwd=settings['repo_base'].value)
+            run(["ninja", "-C", str(settings['build_dir'].value),
+                *settings['cmdline_build'].value], cwd=settings['repo_base'].value)
         else:
             print("failed to configure")
 
@@ -32,7 +35,8 @@ class MesonPlugin(BasePlugin):
 
         if self.is_configured(settings):
             print("m[1]: Entering directory", str(settings['build_dir'].value))
-            run(["meson", "test", *settings['cmdline'].value], cwd=settings['build_dir'].value)
+            run(["meson", "test", *settings['cmdline_test'].value],
+                    cwd=settings['build_dir'].value)
         else:
             print("failed to configure")
 
@@ -56,7 +60,6 @@ class MesonPlugin(BasePlugin):
         else:
             print("failed to configure")
 
-
     @staticmethod
     def _supported(settings):
         """returns a dictionary of supported functions"""
@@ -64,7 +67,6 @@ class MesonPlugin(BasePlugin):
             state = PluginSupport.DEFAULT_MAIN
         else:
             state = PluginSupport.NOT_ENABLED_BY_REPOSITORY
-            
 
         return {
             "build": state,

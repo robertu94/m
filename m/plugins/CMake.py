@@ -1,6 +1,7 @@
 from subprocess import run
 from .Base import plugin, BasePlugin, PluginSupport
 
+
 @plugin
 class CMakePlugin(BasePlugin):
 
@@ -8,7 +9,8 @@ class CMakePlugin(BasePlugin):
         """configure the build directory"""
         if not self.is_configured(settings):
             settings['build_dir'].value.mkdir(exist_ok=True)
-            run(["cmake","..","-G","Ninja"], cwd=settings['build_dir'].value)
+            run(["cmake", "..", "-G", "Ninja"],
+                cwd=settings['build_dir'].value)
 
     def is_configured(self, settings):
         """test if the build directory is configured"""
@@ -19,7 +21,8 @@ class CMakePlugin(BasePlugin):
 
     @staticmethod
     def print_builddir(settings):
-        print(f"m: Entering directory '{settings['build_dir'].value!s}'", flush=True)
+        print(f"m: Entering directory '{settings['build_dir'].value!s}'",
+              flush=True)
 
     def build(self, settings):
         """compiles the source code or a subset thereof"""
@@ -27,7 +30,8 @@ class CMakePlugin(BasePlugin):
 
         if self.is_configured(settings):
             self.print_builddir(settings)
-            run(["cmake","--build",".", *settings['cmdline'].value], cwd=settings['build_dir'].value)
+            run(["cmake", "--build", ".",  *settings['cmdline_build'].value],
+                 cwd=settings['build_dir'].value)
         else:
             print("failed to configure")
 
@@ -38,7 +42,8 @@ class CMakePlugin(BasePlugin):
 
         if self.is_configured(settings):
             self.print_builddir(settings)
-            run(["ctest", *settings['cmdline'].value], cwd=settings['build_dir'].value)
+            run(["ctest", *settings['cmdline_test'].value],
+                cwd=settings['build_dir'].value)
         else:
             print("failed to configure")
 
@@ -48,7 +53,8 @@ class CMakePlugin(BasePlugin):
 
         if self.is_configured(settings):
             self.print_builddir(settings)
-            run(["cmake", "--build", ".", "--target", "clean"], cwd=settings['build_dir'].value)
+            run(["cmake", "--build", ".", "--target", "clean"],
+                cwd=settings['build_dir'].value)
         else:
             print("failed to configure")
 
@@ -58,19 +64,18 @@ class CMakePlugin(BasePlugin):
 
         if self.is_configured(settings):
             self.print_builddir(settings)
-            run(["cmake","--install","."], cwd=settings['build_dir'].value)
+            run(["cmake", "--install", "."], cwd=settings['build_dir'].value)
         else:
             print("failed to configure")
-
 
     @staticmethod
     def _supported(settings):
         """returns a dictionary of supported functions"""
-        if 'repo_base' in  settings and (settings['repo_base'].value / "CMakeLists.txt").exists():
+        if 'repo_base' in settings and \
+                (settings['repo_base'].value / "CMakeLists.txt").exists():
             state = PluginSupport.DEFAULT_MAIN
         else:
             state = PluginSupport.NOT_ENABLED_BY_REPOSITORY
-            
 
         return {
             "build": state,

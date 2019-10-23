@@ -160,7 +160,12 @@ class MBuildTool:
 
     def _args_to_settings(self, args):
         return {
-                key:Setting(key, value, "CmdlineArguments", priority=Setting.URGENT)
+                key: Setting(
+                    key,
+                    value,
+                    "CmdlineArguments",
+                    priority=Setting.URGENT,
+                    )
                 for key, value
                 in vars(args).items()
                 if any(isinstance(value, cls) for cls in (int,str,list,Path))
