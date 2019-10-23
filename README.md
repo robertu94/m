@@ -36,7 +36,7 @@ command to run only python test cases:
 
 ```json
 {
-  "cmdline_test": ['-R', 'python']
+  "cmdline_test": ["-R", "python"]
 }
 ```
 
