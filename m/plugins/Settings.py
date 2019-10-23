@@ -13,7 +13,8 @@ class Settings(BasePlugin):
             "settings": PluginSupport.DEFAULT_MAIN,
         }
 
-    def _find_repo_base(self):
+    @staticmethod
+    def find_repo_base():
         repo_base = Path.cwd()
         dirs = [Path.cwd(), *Path.cwd().parents]
         for path in dirs:
@@ -28,8 +29,9 @@ class Settings(BasePlugin):
                 break
         return repo_base
 
-    def _find_build_dir(self):
-        base = self._find_repo_base() 
+    @staticmethod
+    def find_build_dir():
+        base = Settings.find_repo_base() 
         if base is not None:
             return base / "build"
         else:
@@ -38,10 +40,10 @@ class Settings(BasePlugin):
 
     def settings(self, current_settings) -> typing.List[Setting]:
         """returns settings that this plugin is authoritative for"""
-        make_setting = self.get_settings_factory()
+        make_setting = self.get_settings_factory(priority=Setting.LOW)
         return [
-            make_setting("repo_base", self._find_repo_base()),
-            make_setting("build_dir", self._find_build_dir()),
+            make_setting("repo_base", self.find_repo_base()),
+            make_setting("build_dir", self.find_build_dir()),
             *super().settings(current_settings),
         ]
 

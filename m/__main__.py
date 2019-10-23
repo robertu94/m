@@ -6,6 +6,7 @@ import argparse
 import itertools
 import shlex
 import logging
+from pathlib import Path
 
 from .plugins.Base import MBuildTool
 
@@ -23,6 +24,7 @@ def parse_args():
     parser.add_argument("--verbose", "-v", action="count", default=0)
     parser.add_argument("--cmd_enable", "-e", action="append", default=[])
     parser.add_argument("--cmd_disable", "-d", action="append", default=[])
+    parser.add_argument("--build_dir", "-b", type=Path)
     parser.set_defaults(action=lambda m: m.build())
 
     subparsers = parser.add_subparsers()

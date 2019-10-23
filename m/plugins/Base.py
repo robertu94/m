@@ -21,6 +21,7 @@ class NotProvidedError(Exception):
 
 class Setting:
 
+    UNSET = -100 # used only by cmdline for unset arguments
     LOW = 0
     DEFAULT = 100
     URGENT = 200
@@ -37,7 +38,12 @@ class Setting:
             value=pprint.pformat(self.value)
         )
     def __repr__(self):
-        return str(self)
+        return "{source}[{priority}]:{name} : {value}".format(
+            source=self.source,
+            priority=self.priority,
+            name=self.name,
+            value=pprint.pformat(self.value),
+        )
 
 
 class PluginSupport(enum.IntEnum):
@@ -76,7 +82,7 @@ class PluginSupport(enum.IntEnum):
     REQUESTED_CMD_AFTER -- this module was specifically requested on the
                            command line, after the main mode
     """
-    SETTTINGS_DISABLED = -4
+    SETTINGS_DISABLED = -4
     CMD_DISABLED = -3
     NOT_SUPPORTED = -2
     NOT_ENABLED_BY_REPOSITORY = -1
@@ -156,6 +162,10 @@ class BasePlugin:
                     is_supported = PluginSupport.REQUESTED_CMD_MAIN
                 if setting.name == "cmd_disable" and self._is_in_ignorecase(cls_name, setting.value):
                     is_supported = PluginSupport.CMD_DISABLED
+                if setting.name == "settings_enable" and self._is_in_ignorecase(cls_name, setting.value):
+                    is_supported = PluginSupport.REQUESTED_SETTINGS_MAIN
+                if setting.name == "settings_disable" and self._is_in_ignorecase(cls_name, setting.value):
+                    is_supported = PluginSupport.SETTINGS_DISABLED
         return is_supported
 
 
@@ -186,7 +196,7 @@ class MBuildTool:
                     key,
                     value,
                     "CmdlineArguments",
-                    priority=Setting.URGENT,
+                    priority=Setting.URGENT if value else Setting.UNSET,
                     )
                 for key, value
                 in vars(args).items()
