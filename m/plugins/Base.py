@@ -119,6 +119,9 @@ class BasePlugin:
         """cleans source code or a subset there of"""
         raise NotProvidedError("install", self)
 
+    def run(self, settings):
+        """runs the provided target"""
+        raise NotProvidedError("run", self)
 
     def get_settings_factory(self, cls=None, priority=Setting.DEFAULT):
         """returns a helper function that fills in commmon arguments on the Setting object"""
@@ -278,6 +281,11 @@ class MBuildTool:
         self._run_action("settings")
         self._run_action("install")
 
+
+    def run(self):
+        """delgates to the right compile function"""
+        self._run_action("settings")
+        self._run_action("run")
 
     def settings(self):
         """delegates to the right clean function"""

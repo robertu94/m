@@ -1,4 +1,4 @@
-from subprocess import run
+from subprocess import run, DEVNULL
 from .Base import plugin, BasePlugin, PluginSupport
 
 
@@ -9,8 +9,15 @@ class CMakePlugin(BasePlugin):
         """configure the build directory"""
         if not self.is_configured(settings):
             settings['build_dir'].value.mkdir(exist_ok=True)
-            run(["cmake", "..", "-G", "Ninja"],
-                cwd=settings['build_dir'].value)
+            args = ["cmake", ".."]
+            if self.has_ninja():
+                args.extend(["-G", "Ninja"])
+            if self.has_ccache():
+                args.extend([
+                    "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
+                    "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
+                    ])
+            run(args, cwd=settings['build_dir'].value)
 
     def is_configured(self, settings):
         """test if the build directory is configured"""
@@ -18,6 +25,18 @@ class CMakePlugin(BasePlugin):
                    (settings['build_dir'].value / "build.ninja").exists() or
                    (settings['build_dir'].value / "Makefile").exists()
                )
+
+    @staticmethod
+    def has_ccache() -> bool:
+        """returns if the system has ccache on the path"""
+        result = run(["ccache", "-V"], stdout=DEVNULL, stderr=DEVNULL)
+        return result.returncode == 0
+
+    @staticmethod
+    def has_ninja() -> bool:
+        """returns if the system has ninja on the path"""
+        result = run(["ninja", "--version"])
+        return result.returncode == 0
 
     @staticmethod
     def print_builddir(settings):

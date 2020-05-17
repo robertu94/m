@@ -11,7 +11,7 @@ from pathlib import Path
 from .plugins.Base import MBuildTool
 
 
-MODES = ('build', 'clean', 'test', 'install', 'settings')
+MODES = ('build', 'clean', 'test', 'install', 'settings', 'run')
 
 
 def parse_args():

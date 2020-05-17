@@ -35,6 +35,7 @@ class AutotoolsPlugin(BasePlugin):
         if 'repo_base' in  settings and (
                 (settings['repo_base'].value / "autogen.sh").exists() or
                 (settings['repo_base'].value / "configure").exists() or
+                (settings['repo_base'].value / "GNUmakefile").exists() or
                 (settings['repo_base'].value / "Makefile").exists() or
                 (settings['repo_base'].value / "makefile").exists()
                 ):
