@@ -4,5 +4,6 @@ from . import CMake
 from . import Autotools
 from . import Meson
 from . import Python
+from . import Julia
 from . import Settings
 from . import ConfigFile

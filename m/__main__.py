@@ -3,6 +3,7 @@
 """main entrypoint for MTool"""
 
 import argparse
+import collections
 import itertools
 import shlex
 import logging
@@ -11,7 +12,27 @@ from pathlib import Path
 from .plugins.Base import MBuildTool
 
 
-MODES = ('build', 'clean', 'test', 'install', 'settings', 'run')
+MODES = ('build', 'clean', 'test', 'install', 'settings', 'run', 'bench', 'tidy', 'format')
+
+def make_abbreviations(mode):
+    """creates a list of abbreviations for a given mode
+    the list of abbreviations is all prefixes for a given mode.
+    If prefixes are non-unique, then they are assigned to the first mode that has that prefix
+
+    i.e. build -> b, bu, bui, buil
+    i.e. bench -> be, ben, benc
+        note b is assigned to build since it comes first
+    """
+    abbreviations = {}
+    for _mode in reversed(MODES):
+        for prefix in itertools.accumulate(_mode):
+            abbreviations[prefix] = _mode
+
+    inv_abbrev = collections.defaultdict(list)
+    for key in abbreviations:
+        inv_abbrev[abbreviations[key]].append(key)
+
+    return inv_abbrev[mode]
 
 
 def parse_args():
@@ -31,7 +52,8 @@ def parse_args():
 
     # all the other modes
     for mode in MODES:
-        mode_parser = subparsers.add_parser(mode, aliases=[mode[0]])
+        alias = make_abbreviations(mode)
+        mode_parser = subparsers.add_parser(mode, aliases=list(alias))
 
         # using the lambda with default argument creates a new scope which
         # captures the mode mode variable by value instead of by reference

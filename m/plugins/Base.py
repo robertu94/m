@@ -123,6 +123,14 @@ class BasePlugin:
         """runs the provided target"""
         raise NotProvidedError("run", self)
 
+    def tidy(self, settings):
+        """runs the provided target"""
+        raise NotProvidedError("tidy", self)
+
+    def bench(self, settings):
+        """runs the provided target"""
+        raise NotProvidedError("bench", self)
+
     def get_settings_factory(self, cls=None, priority=Setting.DEFAULT):
         """returns a helper function that fills in commmon arguments on the Setting object"""
         if cls is None:
@@ -281,9 +289,23 @@ class MBuildTool:
         self._run_action("settings")
         self._run_action("install")
 
+    def format(self):
+        """delegates to the right format function"""
+        self._run_action("settings")
+        self._run_action("format")
+
+    def tidy(self):
+        """delegates to the right tidy function"""
+        self._run_action("settings")
+        self._run_action("tidy")
+
+    def bench(self):
+        """delegates to the right bench function"""
+        self._run_action("settings")
+        self._run_action("bench")
 
     def run(self):
-        """delgates to the right compile function"""
+        """delgates to the right run function"""
         self._run_action("settings")
         self._run_action("run")
 

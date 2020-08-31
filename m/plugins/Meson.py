@@ -29,6 +29,29 @@ class MesonPlugin(BasePlugin):
         else:
             print("failed to configure")
 
+    def tidy(self, settings):
+        """runs static analysis"""
+        self.configure(settings)
+
+        if self.is_configured(settings):
+            print("m[1]: Entering directory", str(settings['build_dir'].value))
+            run(["ninja", "-C", str(settings['build_dir'].value), "scan-build",
+                *settings['cmdline_tidy'].value], cwd=settings['repo_base'].value)
+        else:
+            print("failed to configure")
+
+
+    def bench(self, settings):
+        """run benchmarks"""
+        self.configure(settings)
+
+        if self.is_configured(settings):
+            print("m[1]: Entering directory", str(settings['build_dir'].value))
+            run(["ninja", "-C", str(settings['build_dir'].value), "benchmark",
+                *settings['cmdline_bench'].value], cwd=settings['repo_base'].value)
+        else:
+            print("failed to configure")
+
     def test(self, settings):
         """runs automated tests on source code or a subset there of"""
         self.configure(settings)
@@ -72,6 +95,8 @@ class MesonPlugin(BasePlugin):
             "build": state,
             "test": state,
             "clean": state,
-            "install": state
+            "install": state,
+            "tidy": state,
+            "bench": state,
         }
 

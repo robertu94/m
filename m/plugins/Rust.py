@@ -25,6 +25,19 @@ class RustPlugin(BasePlugin):
         """runs the binary"""
         run(["cargo", "run", *settings['cmdline_run'].value], cwd=settings['repo_base'].value)
 
+    def format(self, settings):
+        """runs the binary"""
+        run(["cargo", "fmt", *settings['cmdline_format'].value], cwd=settings['repo_base'].value)
+
+    def tidy(self, settings):
+        """runs the binary"""
+        run(["cargo", "check", *settings['cmdline_tidy'].value], cwd=settings['repo_base'].value)
+
+
+    def bench(self, settings):
+        """runs the binary"""
+        run(["cargo", "bench", *settings['cmdline_bench'].value], cwd=settings['repo_base'].value)
+
     @staticmethod
     def _supported(settings):
         """returns a dictionary of supported functions"""
@@ -39,6 +52,9 @@ class RustPlugin(BasePlugin):
             "test": state,
             "clean": state,
             "install": state,
-            "run": state
+            "run": state,
+            "format": state,
+            "tidy": state,
+            "bench": state,
         }
 
