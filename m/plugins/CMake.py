@@ -17,6 +17,7 @@ class CMakePlugin(BasePlugin):
                     "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
                     "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
                     ])
+            args.extend(settings['cmdline_configure'].value)
             run(args, cwd=settings['build_dir'].value)
 
     def is_configured(self, settings):
@@ -97,6 +98,7 @@ class CMakePlugin(BasePlugin):
             state = PluginSupport.NOT_ENABLED_BY_REPOSITORY
 
         return {
+            "configure": state,
             "build": state,
             "test": state,
             "clean": state,

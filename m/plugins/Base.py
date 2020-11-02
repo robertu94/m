@@ -274,6 +274,11 @@ class MBuildTool:
         self._run_action("settings")
         self._run_action("build")
 
+    def configure(self):
+        """delgates to the right configure function"""
+        self._run_action("settings")
+        self._run_action("configure")
+
     def test(self):
         """delgates to the right test function"""
         self._run_action("settings")

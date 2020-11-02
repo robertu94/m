@@ -5,15 +5,18 @@ from .Base import plugin, BasePlugin, PluginSupport
 @plugin
 class AutotoolsPlugin(BasePlugin):
 
-    def build(self, settings):
-        """compiles the source code or a subset thereof"""
-
+    def configure(self, settings):
         if not (settings['repo_base'].value / "configure").exists() and (settings['repo_base'].value / "autogen.sh").exists():
-            run(["./autogen.sh"], cwd=settings['repo_base'].value)
+            run(["./autogen.sh"],  cwd=settings['repo_base'].value)
 
         if not (settings['repo_base'].value / "configure").exists() and (settings['repo_base'].value / "configure").exists():
-            run(["./configure"], cwd=settings['repo_base'].value)
+            args = ["./configure"]
+            args.extend(settings['cmdline_configure'].value)
+            run(args,  cwd=settings['repo_base'].value)
 
+    def build(self, settings):
+        """compiles the source code or a subset thereof"""
+        self.configure(settings)
         run(["make", "-j", str(cpu_count())], cwd=settings['repo_base'].value)
 
     def test(self, settings):
@@ -45,6 +48,7 @@ class AutotoolsPlugin(BasePlugin):
             
 
         return {
+            "configure": state,
             "build": state,
             "test": state,
             "clean": state,

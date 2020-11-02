@@ -19,7 +19,7 @@ class RustPlugin(BasePlugin):
 
     def install(self, settings):
         """compiles the source code or a subset thereof"""
-        run(["cargo", "install"], cwd=settings['repo_base'].value)
+        run(["cargo", "install", *settings['cmdline_install'].value], cwd=settings['repo_base'].value)
 
     def run(self, settings):
         """runs the binary"""

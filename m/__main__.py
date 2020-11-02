@@ -12,7 +12,7 @@ from pathlib import Path
 from .plugins.Base import MBuildTool
 
 
-MODES = ('build', 'clean', 'test', 'install', 'settings', 'run', 'bench', 'tidy', 'format')
+MODES = ('build', 'clean', 'configure', 'test', 'install', 'settings', 'run', 'bench', 'tidy', 'format')
 
 def make_abbreviations(mode):
     """creates a list of abbreviations for a given mode
