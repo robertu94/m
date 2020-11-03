@@ -7,19 +7,19 @@ class PythonSetupToolsPlugin(BasePlugin):
 
     def build(self, settings):
         """compiles the source code or a subset thereof"""
-        run(["python", "setup.py", "build"], cwd=settings['repo_base'].value)
+        run(["python", "setup.py", "build", *settings['cmdline_build'].value], cwd=settings['repo_base'].value)
 
     def test(self, settings):
         """runs automated tests on source code or a subset there of"""
-        run(["python", "setup.py", "test"], cwd=settings['repo_base'].value)
+        run(["python", "setup.py", "test", *settings['cmdline_test'].value], cwd=settings['repo_base'].value)
 
     def clean(self, settings):
         """cleans source code or a subset there of"""
-        run(["python", "setup.py", "clean"], cwd=settings['repo_base'].value)
+        run(["python", "setup.py", "clean", *settings['cmdline_clean'].value], cwd=settings['repo_base'].value)
 
     def install(self, settings):
         """cleans source code or a subset there of"""
-        run(["python", "setup.py", "install"], cwd=settings['repo_base'].value)
+        run(["python", "setup.py", "install", *settings['cmdline_install'].value], cwd=settings['repo_base'].value)
 
 
     @staticmethod

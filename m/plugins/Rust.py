@@ -38,6 +38,9 @@ class RustPlugin(BasePlugin):
         """runs the binary"""
         run(["cargo", "bench", *settings['cmdline_bench'].value], cwd=settings['repo_base'].value)
 
+    def generate(self, settings):
+        run(["cargo", "init", *settings['cmdline_generate'].value], cwd=settings['repo_base'].value)
+
     @staticmethod
     def _supported(settings):
         """returns a dictionary of supported functions"""
@@ -56,5 +59,6 @@ class RustPlugin(BasePlugin):
             "format": state,
             "tidy": state,
             "bench": state,
+            "generate": PluginSupport.NOT_ENABLED_BY_DEFAULT,
         }
 

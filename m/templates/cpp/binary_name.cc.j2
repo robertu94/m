@@ -1,0 +1,42 @@
+#include <iostream>
+#include <string>
+#include <unistd.h>
+#include "{{repo_name}}_version.h"
+
+const std::string usage = R"({{repo_name}}
+{description}
+
+-h print this message
+-v print the version information
+)";
+
+struct cmdline_args {
+};
+
+cmdline_args parse_args(int argc, char* argv[]) {
+  cmdline_args args;
+
+  int opt;
+  while((opt = getopt(argc, argv, "hv")) != -1) {
+    switch (opt) {
+      case 'h':
+        std::cout << usage << std::endl;;
+        exit(0);
+        break;
+      case 'v':
+      std::cout << {{repo_name | upper }}_VERSION << std::endl;
+        exit(0);
+        break;
+    }
+  }
+
+  return args;
+}
+
+int main(int argc, char *argv[])
+{
+  auto args = parse_args(argc, argv);
+
+  std::cout << "hello world" << std::endl;
+  return 0;
+}

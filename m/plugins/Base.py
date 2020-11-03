@@ -131,6 +131,10 @@ class BasePlugin:
         """runs the provided target"""
         raise NotProvidedError("bench", self)
 
+    def generate(self, settings):
+        """runs the provided target"""
+        raise NotProvidedError("generate", self)
+
     def get_settings_factory(self, cls=None, priority=Setting.DEFAULT):
         """returns a helper function that fills in commmon arguments on the Setting object"""
         if cls is None:
@@ -320,6 +324,10 @@ class MBuildTool:
         for value in self._settings.values():
             print(value)
 
+    def generate(self):
+        """delgates to the right run function"""
+        self._run_action("settings")
+        self._run_action("generate")
 
 
 

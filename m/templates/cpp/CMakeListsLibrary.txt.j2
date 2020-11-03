@@ -1,0 +1,107 @@
+## template for a CMake C++ Library
+cmake_minimum_required(VERSION 3.14)
+project({{repo_name}} VERSION "0.0.1" LANGUAGES CXX)
+
+#correct was to set a default build type
+# https://blog.kitware.com/cmake-and-the-default-build-type/
+set(default_build_type "Release")
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "No build type was set. Setting build type to ${default_build_type}.")
+  set(CMAKE_BUILD_TYPE ${default_build_type} CACHE 
+    STRING "Choose the type to build" FORCE)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
+    "MinSizeRel" "RelWithDebInfo")
+endif()
+
+include(CTest)
+include(GNUInstallDirs)
+include(CheckCXXCompilerFlag)
+
+#compiler flags and standard conformance checks
+check_cxx_compiler_flag("-fno-omit-frame-pointer" HAVE_NO_OMIT_FRAME_POINTER)
+set(NO_OMIT_FRAME_POINTER_FLAG "")
+if(HAVE_NO_OMIT_FRAME_POINTER)
+  set(NO_OMIT_FRAME_POINTER_FLAG "-fno-omit-frame-pointer")
+endif()
+
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+option(BUILD_SHARED_LIBS "build {{repo_name}} as a shared library" ON)
+
+add_library({{repo_name}}
+  ./src/{{repo_name}}.cc
+  ./include/{{repo_name}}.h
+  )
+target_compile_features({{repo_name}} PUBLIC cxx_std_17)
+target_include_directories({{repo_name}} 
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> 
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/{{repo_name}}>
+  )
+target_compile_options({{repo_name}} PRIVATE 
+  $<$<CONFIG:Debug>: -Wall -Werror -Wextra -Wpedantic>
+  $<$<CONFIG:RelWithDebInfo>: ${NO_OMIT_FRAME_POINTER_FLAG}>
+  )
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/{{repo_name}}_version.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/include/{{repo_name}}_version.h
+  )
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/{{repo_name}}.pc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/{{repo_name}}.pc
+  @ONLY
+  )
+
+export(TARGETS {{repo_name}} NAMESPACE {{repo_name}}:: FILE {{repo_name}}.cmake)
+install(TARGETS {{repo_name}} EXPORT {{repo_name}}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  )
+install(EXPORT {{repo_name}} NAMESPACE {{repo_name}}:: DESTINATION share/{{repo_name}}/cmake)
+install(DIRECTORY include/ DESTINATION
+  ${CMAKE_INSTALL_INCLUDEDIR}/{{repo_name}})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/{{repo_name}}_version.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/{{repo_name}})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/{{repo_name}}.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/share/pkgconfig)
+
+
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()
+
+option(USE_CLANG_TIDY "include clang-tidy warnings in the build log" OFF)
+if(USE_CLANG_TIDY)
+  find_program(CLANG_TIDY clang-tidy)
+  set_target_properties({{repo_name}} PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY}")
+  set_target_properties({{repo_name}} PROPERTIES C_CLANG_TIDY "${CLANG_TIDY}")
+endif()
+
+option(USE_INCLUDE_WHAT_YOU_USE "include include-what-you-use warnings in the build log" OFF)
+if(USE_INCLUDE_WHAT_YOU_USE)
+  find_program(INCLUDE_WHAT_YOU_USE include-what-you-use)
+  set_target_properties({{repo_name}} PROPERTIES CXX_INCLUDE_WHAT_YOU_USE "${INCLUDE_WHAT_YOU_USE}")
+  set_target_properties({{repo_name}} PROPERTIES C_INCLUDE_WHAT_YOU_USE "${INCLUDE_WHAT_YOU_USE}")
+endif()
+
+
+option(BUILD_DOCS "build the documentation" OFF)
+if(BUILD_DOCS)
+  find_package(Doxygen REQUIRED dot)
+  set(DOXYGEN_MAN_LINKS YES)
+  set(DOXYGEN_GENERATE_MAN YES)
+  set(DOXYGEN_GENERATE_HTML YES)
+  set(DOXYGEN_EXTRACT_LOCAL_METHODS YES)
+  set(DOXYGEN_EXTRACT_STATIC YES)
+  set(DOXYGEN_MACRO_EXPANSION YES)
+  set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
+  doxygen_add_docs(
+    docs
+    ${PROJECT_SOURCE_DIR}/README.md
+    ${PROJECT_SOURCE_DIR}/include
+    COMMENT "Generate Documenation"
+  )
+endif()
+# vim: ft=cmake :

@@ -1,6 +1,7 @@
-from subprocess import run, DEVNULL
+from subprocess import run, DEVNULL, PIPE
 from .Base import plugin, BasePlugin, PluginSupport
-
+import json
+from jinja2 import Environment, PackageLoader, select_autoescape
 
 @plugin
 class CMakePlugin(BasePlugin):
@@ -88,6 +89,63 @@ class CMakePlugin(BasePlugin):
         else:
             print("failed to configure")
 
+    def generate(self, settings):
+        g_settings = settings['cmdline_generate'].value
+        if (not g_settings) or g_settings[0].startswith("l"):
+            self._generate_library(settings)
+        elif g_settings[0].startswith("b"):
+            self._generate_binary(settings)
+        else:
+            print("unknown options", *g_settings)
+
+    def _prepare_template(self, settings):
+        cmake_version_p = run(["cmake", "-E", "capabilities"], stdout=PIPE, stderr=PIPE)
+        cmake_version = json.loads(cmake_version_p.stdout)['version']['string']
+
+        env = {
+            "cmake_version_str": cmake_version,
+            "repo_name": settings['repo_base'].value.name
+        }
+        template_env = Environment(
+                loader=PackageLoader('m', 'templates'),
+                autoescape=select_autoescape(['html', 'xml'])
+        )
+
+        def templater(template_name, template_dest):
+            template = template_env.get_template(template_name)
+            render = template.render(**env)
+            with open(template_dest, 'w') as outfile:
+                outfile.write(render)
+
+        return templater, env
+
+    def _generate_library(self, settings):
+        templater, env = self._prepare_template(settings)
+        (settings['repo_base'].value / "test").mkdir(exist_ok=True, parents=True)
+        (settings['repo_base'].value / "include").mkdir(exist_ok=True, parents=True)
+        (settings['repo_base'].value / "src").mkdir(exist_ok=True, parents=True)
+        (settings['repo_base'].value / "src" / (env['repo_name'] + ".cc")).touch()
+        (settings['repo_base'].value / "include" / (env['repo_name'] + ".h")).touch()
+        templater("cpp/CMakeListsLibrary.txt.j2", settings['repo_base'].value / "CMakeLists.txt")
+        templater("cpp/library_name.pc.in.j2", settings['repo_base'].value / (env['repo_name'] + ".pc.in"))
+        templater("cpp/repo_name_version.h.in.j2", settings['repo_base'].value / "src" / (env['repo_name'] + "_version.h.in"))
+        templater("cpp/CMakeListsTests.txt.j2", settings['repo_base'].value /"test"/ "CMakeLists.txt")
+        templater("cpp/GTestCMakeLists.txt.in.j2", settings['repo_base'].value /"test"/ "GTestCMakeLists.txt.in")
+        templater("cpp/test.cc.j2", settings['repo_base'].value /"test"/ ("test_" + env['repo_name'] + ".cc"))
+
+    def _generate_binary(self, settings):
+        templater, env = self._prepare_template(settings)
+        (settings['repo_base'].value / "test").mkdir(exist_ok=True, parents=True)
+        (settings['repo_base'].value / "include").mkdir(exist_ok=True, parents=True)
+        (settings['repo_base'].value / "src").mkdir(exist_ok=True, parents=True)
+        (settings['repo_base'].value / "include" / (env['repo_name'] + ".h")).touch()
+        templater("cpp/binary_name.cc.j2", settings['repo_base'].value /"src"/ (env['repo_name'] + ".cc"))
+        templater("cpp/CMakeListsBinary.txt.j2", settings['repo_base'].value / "CMakeLists.txt")
+        templater("cpp/repo_name_version.h.in.j2", settings['repo_base'].value / "src" / (env['repo_name'] + "_version.h.in"))
+        templater("cpp/CMakeListsTests.txt.j2", settings['repo_base'].value /"test"/ "CMakeLists.txt")
+        templater("cpp/GTestCMakeLists.txt.in.j2", settings['repo_base'].value /"test"/ "GTestCMakeLists.txt.in")
+        templater("cpp/test.cc.j2", settings['repo_base'].value /"test"/ ("test_" + env['repo_name'] + ".cc"))
+
     @staticmethod
     def _supported(settings):
         """returns a dictionary of supported functions"""
@@ -102,6 +160,7 @@ class CMakePlugin(BasePlugin):
             "build": state,
             "test": state,
             "clean": state,
-            "install": state
+            "install": state,
+            "generate": PluginSupport.NOT_ENABLED_BY_DEFAULT,
         }
 

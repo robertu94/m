@@ -4,7 +4,7 @@
 from setuptools import setup, find_packages
 
 setup(name="m",
-     version="2.3.0",
+     version="2.4.0",
      description="a software build tool",
      long_description="file: README.md",
      author="Robert Underwood",
@@ -13,5 +13,12 @@ setup(name="m",
      packages=find_packages(),
      entry_points= {
          'console_scripts': [ 'm = m.__main__:main']
-     }
+     },
+     package_data={
+         "": ["*.j2"]
+     },
+     install_requires=[
+         "jinja2",
+         "setuptools",
+     ]
 )

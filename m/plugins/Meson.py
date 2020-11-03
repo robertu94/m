@@ -83,6 +83,11 @@ class MesonPlugin(BasePlugin):
         else:
             print("failed to configure")
 
+    def generate(self, settings):
+        """generates a blank project"""
+        run(["meson", "init", *settings['cmdline_generate'].value], cwd=settings['repo_base'].value)
+
+
     @staticmethod
     def _supported(settings):
         """returns a dictionary of supported functions"""
@@ -98,5 +103,6 @@ class MesonPlugin(BasePlugin):
             "install": state,
             "tidy": state,
             "bench": state,
+            "generate": PluginSupport.NOT_ENABLED_BY_DEFAULT,
         }
 
