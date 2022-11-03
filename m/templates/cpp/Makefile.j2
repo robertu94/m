@@ -1,0 +1,8 @@
+CFLAGS=-O2 -Wall -Wextra -Wpedantic
+CXXFLAGS=-std=c++17  $(CFLAGS)
+LDFLAGS=
+{{repo_name}}:
+check: {{repo_name}}
+	./{{repo_name}}
+clean:
+	$(RM) {{repo_name}}

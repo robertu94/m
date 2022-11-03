@@ -3,9 +3,9 @@ from pathlib import Path
 from subprocess import run
 from .Base import plugin, BasePlugin, PluginSupport, Setting
 
+
 @plugin
 class Settings(BasePlugin):
-
     @staticmethod
     def _supported(settings):
         """returns a dictionary of supported functions"""
@@ -31,12 +31,11 @@ class Settings(BasePlugin):
 
     @staticmethod
     def find_build_dir():
-        base = Settings.find_repo_base() 
+        base = Settings.find_repo_base()
         if base is not None:
             return base / "build"
         else:
             return None
-                
 
     def settings(self, current_settings) -> typing.List[Setting]:
         """returns settings that this plugin is authoritative for"""
@@ -46,5 +45,3 @@ class Settings(BasePlugin):
             make_setting("build_dir", self.find_build_dir()),
             *super().settings(current_settings),
         ]
-
-

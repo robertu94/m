@@ -4,6 +4,9 @@ from . import CMake
 from . import Autotools
 from . import Meson
 from . import Python
+from . import Poetry
 from . import Julia
+from . import Stack
 from . import Settings
+from . import Git
 from . import ConfigFile

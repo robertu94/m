@@ -1,65 +1,72 @@
 from subprocess import run
+from pathlib import Path
 from .Base import plugin, BasePlugin, PluginSupport
+from os import execvp, chdir
+import re
 
 
 @plugin
-class RustPlugin(BasePlugin):
+class HaskellStackPlugin(BasePlugin):
     def build(self, settings):
         """compiles the source code or a subset thereof"""
         run(
-            ["cargo", "build", *settings["cmdline_build"].value],
+            ["stack-bin", "build", *settings["cmdline_build"].value],
             cwd=settings["repo_base"].value,
         )
 
     def test(self, settings):
         """runs automated tests on source code or a subset there of"""
         run(
-            ["cargo", "test", *settings["cmdline_test"].value],
+            ["stack-bin", "test", *settings["cmdline_test"].value],
             cwd=settings["repo_base"].value,
         )
 
     def clean(self, settings):
         """cleans source code or a subset there of"""
-        run(["cargo", "clean"], cwd=settings["repo_base"].value)
+        run(
+            ["stack-bin", "clean", *settings["cmdline_clean"].value],
+            cwd=settings["repo_base"].value,
+        )
 
     def install(self, settings):
         """compiles the source code or a subset thereof"""
         run(
-            ["cargo", "install", "--path", ".", *settings["cmdline_install"].value],
+            ["stack-bin", "install", *settings["cmdline_install"].value],
             cwd=settings["repo_base"].value,
         )
 
     def run(self, settings):
         """runs the binary"""
         run(
-            ["cargo", "run", *settings["cmdline_run"].value],
+            ["stack-bin", "run", *settings["cmdline_run"].value],
             cwd=settings["repo_base"].value,
         )
 
-    def format(self, settings):
-        """runs the binary"""
-        run(
-            ["cargo", "fmt", *settings["cmdline_format"].value],
-            cwd=settings["repo_base"].value,
-        )
+    def repl(self, settings):
+        chdir(settings["repo_base"].value)
+        args = ["stack-bin", "repl"]
+        execvp(args[0], args)
 
-    def tidy(self, settings):
-        """runs the binary"""
-        run(
-            ["cargo", "check", *settings["cmdline_tidy"].value],
-            cwd=settings["repo_base"].value,
-        )
+    @staticmethod
+    def haskellize(path):
+        return re.sub("_", "-", str(path))
+
+    def generate(self, settings):
+        g_settings = settings["cmdline_generate"].value or ["simple-library"]
+        args = [
+            "stack-bin",
+            "new",
+            "--bare",
+            self.haskellize(settings["repo_base"].value.stem),
+            *g_settings,
+        ]
+        print(args)
+        run(args, cwd=settings["repo_base"].value)
 
     def bench(self, settings):
         """runs the binary"""
         run(
-            ["cargo", "bench", *settings["cmdline_bench"].value],
-            cwd=settings["repo_base"].value,
-        )
-
-    def generate(self, settings):
-        run(
-            ["cargo", "init", *settings["cmdline_generate"].value],
+            ["stack-bin", "bench", *settings["cmdline_run"].value],
             cwd=settings["repo_base"].value,
         )
 
@@ -68,7 +75,7 @@ class RustPlugin(BasePlugin):
         """returns a dictionary of supported functions"""
         if (
             "repo_base" in settings
-            and (settings["repo_base"].value / "Cargo.toml").exists()
+            and (settings["repo_base"].value / "stack.yaml").exists()
         ):
             state = PluginSupport.DEFAULT_MAIN
         else:
@@ -77,11 +84,9 @@ class RustPlugin(BasePlugin):
         return {
             "build": state,
             "test": state,
+            "run": state,
+            "repl": state,
             "clean": state,
             "install": state,
-            "run": state,
-            "format": state,
-            "tidy": state,
-            "bench": state,
             "generate": PluginSupport.NOT_ENABLED_BY_DEFAULT,
         }

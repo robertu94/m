@@ -12,7 +12,21 @@ from pathlib import Path
 from .plugins.Base import MBuildTool
 
 
-MODES = ('build', 'clean', 'configure', 'test', 'install', 'settings', 'run', 'bench', 'tidy', 'format', 'generate')
+MODES = (
+    "build",
+    "clean",
+    "configure",
+    "test",
+    "install",
+    "settings",
+    "run",
+    "bench",
+    "tidy",
+    "format",
+    "generate",
+    "repl",
+)
+
 
 def make_abbreviations(mode):
     """creates a list of abbreviations for a given mode
@@ -40,8 +54,7 @@ def parse_args():
 
     parser = argparse.ArgumentParser()
     # default mode
-    parser.add_argument("--cmdline_build", "-c",
-        action="append", default=list())
+    parser.add_argument("--cmdline_build", "-c", action="append", default=list())
     parser.add_argument("--verbose", "-v", action="count", default=0)
     parser.add_argument("--cmd_enable", "-e", action="append", default=[])
     parser.add_argument("--cmd_disable", "-d", action="append", default=[])
@@ -59,13 +72,12 @@ def parse_args():
         # captures the mode mode variable by value instead of by reference
         # which would otherwise cause all of the iterations of the loop to have
         # the same value
-        mode_parser.set_defaults(
-            action=lambda m, mode=mode: getattr(m, mode)())
+        mode_parser.set_defaults(action=lambda m, mode=mode: getattr(m, mode)())
 
-        mode_parser.add_argument(f"--cmdline_{mode}",
-                                 "-c", action="append", default=list())
-        parser.add_argument(f"--{mode}_arg",
-                            action="append", default=list())
+        mode_parser.add_argument(
+            f"--cmdline_{mode}", "-c", action="append", default=list()
+        )
+        parser.add_argument(f"--{mode}_arg", action="append", default=list())
 
     return parser.parse_args()
 
@@ -75,17 +87,24 @@ def main():
     args = parse_args()
 
     for mode in MODES:
-        setattr(args, "cmdline_{mode}".format(mode=mode), list(
-            itertools.chain(
-                *[shlex.split(arg) for arg in
+        setattr(
+            args,
+            "cmdline_{mode}".format(mode=mode),
+            list(
                 itertools.chain(
-                    getattr(args, f"cmdline_{mode}", []),
-                    getattr(args, f"{mode}_arg", []))])
-            ))
+                    *[
+                        shlex.split(arg)
+                        for arg in itertools.chain(
+                            getattr(args, f"cmdline_{mode}", []),
+                            getattr(args, f"{mode}_arg", []),
+                        )
+                    ]
+                )
+            ),
+        )
         delattr(args, f"{mode}_arg")
 
-    logging.basicConfig(
-        level=logging.DEBUG if args.verbose > 0 else logging.INFO)
+    logging.basicConfig(level=logging.DEBUG if args.verbose > 0 else logging.INFO)
 
     tool = MBuildTool(args)
     args.action(tool)
