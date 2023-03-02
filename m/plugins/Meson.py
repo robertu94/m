@@ -8,14 +8,14 @@ class MesonPlugin(BasePlugin):
         """configure the build directory"""
         if not self.is_configured(settings):
             settings["build_dir"].value.mkdir(exist_ok=True)
-            run(
+            return run(
                 [
                     "meson",
                     str(settings["build_dir"].value),
                     *settings["cmdline_configure"].value,
                 ],
                 cwd=settings["repo_base"].value,
-            )
+            ).returncode
 
     def is_configured(self, settings):
         """test if the build directory is configured"""
@@ -29,7 +29,7 @@ class MesonPlugin(BasePlugin):
 
         if self.is_configured(settings):
             print("m[1]: Entering directory", str(settings["build_dir"].value))
-            run(
+            return run(
                 [
                     "ninja",
                     "-C",
@@ -37,9 +37,10 @@ class MesonPlugin(BasePlugin):
                     *settings["cmdline_build"].value,
                 ],
                 cwd=settings["repo_base"].value,
-            )
+            ).returncode
         else:
             print("failed to configure")
+            return 1
 
     def tidy(self, settings):
         """runs static analysis"""
@@ -47,7 +48,7 @@ class MesonPlugin(BasePlugin):
 
         if self.is_configured(settings):
             print("m[1]: Entering directory", str(settings["build_dir"].value))
-            run(
+            return run(
                 [
                     "ninja",
                     "-C",
@@ -56,9 +57,10 @@ class MesonPlugin(BasePlugin):
                     *settings["cmdline_tidy"].value,
                 ],
                 cwd=settings["repo_base"].value,
-            )
+            ).returncode
         else:
             print("failed to configure")
+            return 1
 
     def bench(self, settings):
         """run benchmarks"""
@@ -66,7 +68,7 @@ class MesonPlugin(BasePlugin):
 
         if self.is_configured(settings):
             print("m[1]: Entering directory", str(settings["build_dir"].value))
-            run(
+            return run(
                 [
                     "ninja",
                     "-C",
@@ -75,9 +77,10 @@ class MesonPlugin(BasePlugin):
                     *settings["cmdline_bench"].value,
                 ],
                 cwd=settings["repo_base"].value,
-            )
+            ).returncode
         else:
             print("failed to configure")
+            return 1
 
     def test(self, settings):
         """runs automated tests on source code or a subset there of"""
@@ -85,12 +88,13 @@ class MesonPlugin(BasePlugin):
 
         if self.is_configured(settings):
             print("m[1]: Entering directory", str(settings["build_dir"].value))
-            run(
+            return run(
                 ["meson", "test", *settings["cmdline_test"].value],
                 cwd=settings["build_dir"].value,
-            )
+            ).returncode
         else:
             print("failed to configure")
+            return 1
 
     def clean(self, settings):
         """cleans source code or a subset there of"""
@@ -98,9 +102,10 @@ class MesonPlugin(BasePlugin):
 
         if self.is_configured(settings):
             print("m[1]: Entering directory", str(settings["build_dir"].value))
-            run(["ninja", "clean"], cwd=settings["build_dir"].value)
+            return run(["ninja", "clean"], cwd=settings["build_dir"].value).returncode
         else:
             print("failed to configure")
+            return 1
 
     def install(self, settings):
         """cleans source code or a subset there of"""
@@ -108,16 +113,17 @@ class MesonPlugin(BasePlugin):
 
         if self.is_configured(settings):
             print("m[1]: Entering directory", str(settings["build_dir"].value))
-            run(["ninja", "install"], cwd=settings["build_dir"].value)
+            return run(["ninja", "install"], cwd=settings["build_dir"].value).returncode
         else:
             print("failed to configure")
+            return 1
 
     def generate(self, settings):
         """generates a blank project"""
-        run(
+        return run(
             ["meson", "init", *settings["cmdline_generate"].value],
             cwd=settings["repo_base"].value,
-        )
+        ).returncode
 
     @staticmethod
     def _supported(settings):

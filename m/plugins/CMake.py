@@ -39,7 +39,7 @@ class CMakePlugin(BasePlugin):
                     ]
                 )
             args.extend(settings["cmdline_configure"].value)
-            run(args, cwd=settings["build_dir"].value)
+            return run(args, cwd=settings["build_dir"].value).returncode
 
     def is_configured(self, settings):
         """test if the build directory is configured"""
@@ -82,12 +82,13 @@ class CMakePlugin(BasePlugin):
 
         if self.is_configured(settings):
             self.print_builddir(settings)
-            run(
+            return run(
                 ["cmake", "--build", ".", *settings["cmdline_build"].value],
                 cwd=settings["build_dir"].value,
-            )
+            ).returncode
         else:
             print("failed to configure")
+            return -1
 
     def test(self, settings):
         """runs automated tests on source code or a subset there of"""
@@ -96,12 +97,14 @@ class CMakePlugin(BasePlugin):
 
         if self.is_configured(settings):
             self.print_builddir(settings)
-            run(
-                ["ctest", *settings["cmdline_test"].value],
+            ctest_args = settings["cmdline_test"].value or ["--output-on-failure"]
+            return run(
+                ["ctest", *ctest_args],
                 cwd=settings["build_dir"].value,
-            )
+            ).returncode
         else:
             print("failed to configure")
+            return -1
 
     def clean(self, settings):
         """cleans source code or a subset there of"""
@@ -109,12 +112,13 @@ class CMakePlugin(BasePlugin):
 
         if self.is_configured(settings):
             self.print_builddir(settings)
-            run(
+            return run(
                 ["cmake", "--build", ".", "--target", "clean"],
                 cwd=settings["build_dir"].value,
-            )
+            ).returncode
         else:
             print("failed to configure")
+            return -1
 
     def install(self, settings):
         """compiles the source code or a subset thereof"""
@@ -122,18 +126,22 @@ class CMakePlugin(BasePlugin):
 
         if self.is_configured(settings):
             self.print_builddir(settings)
-            run(["cmake", "--install", "."], cwd=settings["build_dir"].value)
+            return run(
+                ["cmake", "--install", "."], cwd=settings["build_dir"].value
+            ).returncode
         else:
             print("failed to configure")
+            return -1
 
     def generate(self, settings):
         g_settings = settings["cmdline_generate"].value
         if (not g_settings) or g_settings[0].startswith("l"):
-            self._generate_library(settings)
+            return self._generate_library(settings)
         elif g_settings[0].startswith("b"):
-            self._generate_binary(settings)
+            return self._generate_binary(settings)
         else:
             print("unknown options", *g_settings)
+            return -1
 
     def _prepare_template(self, settings):
         cmake_version_p = run(["cmake", "-E", "capabilities"], stdout=PIPE, stderr=PIPE)
@@ -191,6 +199,7 @@ class CMakePlugin(BasePlugin):
             "cpp/test.cc.j2",
             settings["repo_base"].value / "test" / ("test_" + env["repo_name"] + ".cc"),
         )
+        return 0
 
     def _generate_binary(self, settings):
         templater, env = self._prepare_template(settings)
@@ -222,6 +231,7 @@ class CMakePlugin(BasePlugin):
             "cpp/test.cc.j2",
             settings["repo_base"].value / "test" / ("test_" + env["repo_name"] + ".cc"),
         )
+        return 0
 
     @staticmethod
     def _supported(settings):

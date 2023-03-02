@@ -10,3 +10,5 @@ from . import Stack
 from . import Settings
 from . import Git
 from . import ConfigFile
+from . import Spack
+from . import Docker

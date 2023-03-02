@@ -7,7 +7,7 @@ from .Base import plugin, BasePlugin, PluginSupport
 class JuliaPlugin(BasePlugin):
     def build(self, settings):
         """compiles the source code or a subset thereof"""
-        run(
+        return run(
             [
                 "julia",
                 "--project",
@@ -16,11 +16,11 @@ class JuliaPlugin(BasePlugin):
                 *settings["cmdline_build"].value,
             ],
             cwd=settings["repo_base"].value,
-        )
+        ).returncode
 
     def test(self, settings):
         """runs automated tests on source code or a subset there of"""
-        run(
+        return run(
             [
                 "julia",
                 "--project",
@@ -29,7 +29,7 @@ class JuliaPlugin(BasePlugin):
                 *settings["cmdline_test"].value,
             ],
             cwd=settings["repo_base"].value,
-        )
+        ).returncode
 
     def repl(self, settings):
         chdir(settings["repo_base"].value)

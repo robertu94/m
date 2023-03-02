@@ -7,35 +7,35 @@ from os import execvp, chdir
 class PythonPoetryPlugin(BasePlugin):
     def build(self, settings):
         """compiles the source code or a subset thereof"""
-        run(
+        return run(
             ["poetry", "build", *settings["cmdline_build"].value],
             cwd=settings["repo_base"].value,
-        )
+        ).returncode
 
     def test(self, settings):
         """runs automated tests on source code or a subset there of"""
-        run(
+        return run(
             ["poetry", "run", "pytest", *settings["cmdline_test"].value],
             cwd=settings["repo_base"].value,
-        )
+        ).returncode
 
     def format(self, settings):
         """runs fomatting on source code or a subset there of"""
-        run(
+        return run(
             ["poetry", "run", "black", *settings["cmdline_format"].value],
             cwd=settings["repo_base"].value,
-        )
+        ).returncode
 
     def tidy(self, settings):
         """runs checks on source code or a subset there of"""
         repo_base = settings["repo_base"].value
         package_dir = repo_base / repo_base.name
-        run(["poetry", "check"], cwd=repo_base)
-        run(
+        c = run(["poetry", "check"], cwd=repo_base)
+        m = run(
             ["poetry", "run", "mypy", package_dir, *settings["cmdline_tidy"].value],
             cwd=repo_base,
         )
-        run(
+        s = run(
             [
                 "poetry",
                 "run",
@@ -45,10 +45,11 @@ class PythonPoetryPlugin(BasePlugin):
             ],
             cwd=repo_base,
         )
+        return c or m or s
 
     def install(self, settings):
         """cleans source code or a subset there of"""
-        run(
+        return run(
             [
                 "python",
                 "-m",
@@ -59,11 +60,11 @@ class PythonPoetryPlugin(BasePlugin):
                 *settings["cmdline_install"].value,
             ],
             cwd=settings["repo_base"].value,
-        )
+        ).returncode
 
     def generate(self, settings):
         repo_base = settings["repo_base"].value
-        run(["poetry", "new", "."], cwd=repo_base)
+        return run(["poetry", "new", "."], cwd=repo_base).returncode
 
     def repl(self, settings):
         chdir(settings["repo_base"].value)

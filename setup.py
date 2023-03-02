@@ -4,7 +4,7 @@
 from setuptools import setup, find_packages
 
 setup(name="m",
-     version="2.5.2",
+     version="2.6.0",
      description="a software build tool",
      long_description="file: README.md",
      author="Robert Underwood",

@@ -7,6 +7,7 @@ import collections
 import itertools
 import shlex
 import logging
+import sys
 from pathlib import Path
 
 from .plugins.Base import MBuildTool
@@ -108,7 +109,11 @@ def main():
 
     tool = MBuildTool(args)
     args.action(tool)
+    for e in tool.errors():
+        if e:
+            return e
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

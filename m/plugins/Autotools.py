@@ -19,38 +19,48 @@ class AutotoolsPlugin(BasePlugin):
         ):
             args = ["./configure"]
             args.extend(settings["cmdline_configure"].value)
-            run(args, cwd=settings["repo_base"].value)
+            return run(args, cwd=settings["repo_base"].value).returncode
 
     def build(self, settings):
         """compiles the source code or a subset thereof"""
         self.configure(settings)
-        run(["make", "-j", str(cpu_count())], cwd=settings["repo_base"].value)
+        return run(
+            ["make", "-j", str(cpu_count())], cwd=settings["repo_base"].value
+        ).returncode
 
     def test(self, settings):
         """runs automated tests on source code or a subset there of"""
-        run(["make", "-j", str(cpu_count()), "check"], cwd=settings["repo_base"].value)
+        return run(
+            ["make", "-j", str(cpu_count()), "check"], cwd=settings["repo_base"].value
+        ).returncode
 
     def bench(self, settings):
         """runs automated benchmarks on source code or a subset there of"""
-        run(["make", "-j", str(cpu_count()), "bench"], cwd=settings["repo_base"].value)
+        return run(
+            ["make", "-j", str(cpu_count()), "bench"], cwd=settings["repo_base"].value
+        ).returncode
 
     def clean(self, settings):
         """cleans source code or a subset there of"""
-        run(["make", "-j", str(cpu_count()), "clean"], cwd=settings["repo_base"].value)
+        return run(
+            ["make", "-j", str(cpu_count()), "clean"], cwd=settings["repo_base"].value
+        ).returncode
 
     def install(self, settings):
         """cleans source code or a subset there of"""
-        run(
+        return run(
             ["make", "-j", str(cpu_count()), "install"], cwd=settings["repo_base"].value
-        )
+        ).returncode
 
     def generate(self, settings):
         """generates a basic project"""
         g_settings = settings["cmdline_generate"].value
         if (not g_settings) or g_settings[0].startswith("m"):
             self._generate_makefile(settings)
+            return 0
         else:
             print("unknown options", *g_settings)
+            return -1
 
     def _prepare_template(self, settings):
 

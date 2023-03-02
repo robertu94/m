@@ -217,6 +217,7 @@ class MBuildTool:
     def __init__(self, args):
         self._settings = self._args_to_settings(args)
         self._actions_run = 0
+        self._error_codes = []
 
     def _args_to_settings(self, args):
         return {
@@ -288,6 +289,7 @@ class MBuildTool:
                 self._update_settings(results)
         except KeyboardInterrupt:
             pass
+        return results
 
     def _update_settings(self, new_settings):
         for new_setting in itertools.chain(*new_settings):
@@ -308,63 +310,67 @@ class MBuildTool:
             else:
                 self._settings[new_setting.name] = new_setting
 
+    def errors(self):
+        return self._error_codes
+
     def build(self):
         """delgates to the right compile function"""
         self._run_action("settings")
-        self._run_action("build")
+        self._error_codes.extend(self._run_action("build"))
 
     def configure(self):
         """delgates to the right configure function"""
         self._run_action("settings")
-        self._run_action("configure")
+        self._error_codes.extend(self._run_action("configure"))
 
     def repl(self):
         """delgates to the right repl function"""
         self._run_action("settings")
-        self._run_action("repl")
+        self._error_codes.extend(self._run_action("repl"))
 
     def test(self):
         """delgates to the right test function"""
         self._run_action("settings")
-        self._run_action("test")
+        self._error_codes.extend(self._run_action("test"))
 
     def clean(self):
         """delegates to the right clean function"""
         self._run_action("settings")
-        self._run_action("clean")
+        self._error_codes.extend(self._run_action("clean"))
 
     def install(self):
         """delegates to the right clean function"""
         self._run_action("settings")
-        self._run_action("install")
+        self._error_codes.extend(self._run_action("install"))
 
     def format(self):
         """delegates to the right format function"""
         self._run_action("settings")
-        self._run_action("format")
+        self._error_codes.extend(self._run_action("format"))
 
     def tidy(self):
         """delegates to the right tidy function"""
         self._run_action("settings")
-        self._run_action("tidy")
+        self._error_codes.extend(self._run_action("tidy"))
 
     def bench(self):
         """delegates to the right bench function"""
         self._run_action("settings")
-        self._run_action("bench")
+        self._error_codes.extend(self._run_action("bench"))
 
     def run(self):
         """delgates to the right run function"""
         self._run_action("settings")
-        self._run_action("run")
+        self._error_codes.extend(self._run_action("run"))
 
     def settings(self):
         """delegates to the right clean function"""
         self._run_action("settings")
         for value in self._settings.values():
             print(value)
+        self._error_codes.append(0)
 
     def generate(self):
         """delgates to the right run function"""
         self._run_action("settings")
-        self._run_action("generate")
+        self._error_codes.append(self._run_action("generate"))
